@@ -13,30 +13,13 @@ float icp::mse_cost(std::vector<std::tuple<float, int, int>>& distances, float x
 {
     size_t Np = distances.size();
     size_t Npo = xi*Np;
-    // std::cout << "--" << std::endl;
-    // std::cout << "mse xi = " << xi << std::endl;
     
-    // e(xi)
     float Sts = std::accumulate(distances.begin(), distances.begin() + Npo, 0, tupleAccumulateOP);
-    // std::cout <<"mse Sts = " << Sts<< std::endl;
-    // std::cout <<"mse Npo = " << Npo<< std::endl;
     xi = (float)std::pow(xi, 3);
     float e = Sts/Npo;
-
-    
-    // std::cout << "mse Npo = " << Npo << std::endl;
-    // std::cout << "mse e = " << e << std::endl;
-    // std::cout << "mse xi = " << xi << std::endl;
-    // std::cout << "mse e/xi = " << e/xi << std::endl;
-    // std::cout << "--"<< std::endl;
     
     return e/xi;
 } 
-// inline
-// bool icp::rejectPair(icp::PointCloud M, size_t ret_index, icp::PointCloud P, size_t i)
-// {
-//     return false;
-// }
 
 bool icp::comparePairs(const std::tuple<float, int, int>& lhs, const std::tuple<float, int, int>& rhs)
 {
@@ -78,7 +61,7 @@ icp::PointCloud icp::addNoise(icp::PointCloud M)
 
 
 // rotation
-icp::PointCloud icp::rotate(icp::PointCloud& M, float deg, Eigen::Vector3f axis)
+Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> icp::rotate(icp::PointCloud& M, float deg, Eigen::Vector3f axis)
 {
     // float deg = 10.f;
     float rad = deg * M_PI / 180;
@@ -86,6 +69,10 @@ icp::PointCloud icp::rotate(icp::PointCloud& M, float deg, Eigen::Vector3f axis)
     Eigen::Transform<float, 3, Eigen::Affine> t;
     Eigen::AngleAxis<float> rot(rad, axis);
     t = rot;
+
     // std::cout<<t.linear()<<std::endl;
-    return (t.linear() * M.transpose()).transpose();
+    // std::cout<<t.linear().inverse()<<std::endl;
+    // std::cout<<t.linear().inverse().matrix()<<std::endl;
+    M = (t.linear() * M.transpose()).transpose();
+    return t.linear().matrix();
 }

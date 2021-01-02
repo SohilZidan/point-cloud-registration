@@ -9,7 +9,7 @@ find_package(Eigen3)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_executable(testTrICP src/main.cpp happly.h src/gsec.cpp src/utils.cpp src/icp.cpp)
+add_executable(testTrICP src/main.cpp happly.h src/gsec.cpp src/utils.cpp src/icp.cpp SO3.hpp)
 
 target_include_directories(testTrICP PRIVATE ${EIGEN3_INCLUDE_DIR})
 

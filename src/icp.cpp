@@ -8,8 +8,11 @@
 #include "gsec.hpp"
 #include "utils.hpp"
 #include "icp.hpp"
+#include "../SO3.hpp"
+
 
 using namespace nanoflann;
+using namespace Geometry;
 
 //
 // Robust ICP
@@ -20,6 +23,7 @@ icp::Icp::Icp(icp::PointCloud &P, icp::PointCloud &M):
     m_index(dim, std::cref(M), 10),
     p_index(dim, P, 10)
 {
+    // std::cout << "T: " << this->T << std::endl;
     // std::cout<<"&P = "<<&P<<std::endl;
     this->P = &P;
     // std::cout<<"&this->P = "<<(this->P)<<std::endl;
@@ -32,18 +36,29 @@ icp::Icp::Icp(icp::PointCloud &P, icp::PointCloud &M):
     this->closestPtsFinder = &icp::Icp::closestpoints;
 }
 
+
+/**
+ * if reciprocal is true, reject points based on eps,
+ * otherwise based on a mutual closeness
+*/
 icp::Icp::Icp(icp::PointCloud &P, icp::PointCloud &M, bool reciprocal): icp::Icp(P, M)
 {
     this->reciprocal = reciprocal;
     if(this->reciprocal) this->closestPtsFinder = &icp::Icp::closestpointsReciprocal;
 }
 
+/**
+ * update iterations and distances vector
+*/
 void icp::Icp::init()
 {
     this->iter++;
     this->initdists();
 }
 
+/**
+ * clear ditances vector content
+*/
 void icp::Icp::initdists()
 {
     // initialize heap
@@ -53,6 +68,11 @@ void icp::Icp::initdists()
     std::make_heap(this->distances.begin(), this->distances.end(), icp::comparePairs);
 }
 
+
+/**
+ * find corresponces in the two pointclouds and compute distances.
+ * kdtree is used
+*/
 void icp::Icp::closestpoints()
 {
     // Step 1: Closest Point
@@ -77,6 +97,9 @@ void icp::Icp::closestpoints()
     }
 }
 
+/**
+ * using Reciprocal: Geometric criterion
+*/
 void icp::Icp::closestpointsReciprocal()
 {
     // Step 1: Closest Point
@@ -104,6 +127,9 @@ void icp::Icp::closestpointsReciprocal()
         std::push_heap(this->distances.begin(), this->distances.end(), icp::comparePairs);
         
     }
+    std::sort_heap(this->distances.begin(), this->distances.end(),  icp::comparePairs);
+    // auto [ dist, pidx, midx ] = this->distances[0];
+    // std::cout << "dist: " << dist << std::endl;
 }
 
 void icp::Icp::updateNpo()
@@ -112,6 +138,10 @@ void icp::Icp::updateNpo()
     // std::cout << "Npo = " << Npo << std::endl;
 }
 
+
+/**
+ * calculate squared distances and mean squared error (mse)
+*/
 void icp::Icp::calculateErrors()
 {
     this->updateNpo();
@@ -136,7 +166,7 @@ bool icp::Icp::convergencetest()
 
 void icp::Icp::constructKDTree()
 {
-    // // this->m_index(this->dim, std::cref(this->M), 10);
+    // this->m_index(this->dim, std::cref(this->M), 10);
     // this->m_index.index->buildIndex();
     // // for Geometric criteria: rejecting wrong point pairs
     // this->p_index.index->buildIndex();
@@ -159,10 +189,19 @@ void icp::Icp::calculateMotion()
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> umeyama = Eigen::umeyama(A.transpose(), B.transpose(), false);
     // std::cout << "The matrix umeyama is of size "
     //         << umeyama.rows() << "x" << umeyama.cols() << std::endl;
-    // std::cout << umeyama.block(0,0,3,3) << std::endl;
+    // std::cout << "Transformation: " << std::endl << umeyama << std::endl;
     this->R = umeyama.block(0,0,3,3);
     this->t  = umeyama.block(0,3,3,1);
 
+    // std::cout << "rotation error = " <<
+    //             std::acos(((
+    //                 this->R.transpose().array() * this->Rtotal.array()).matrix().trace() - 1) / 2.0 
+    //                 ) * 180.f/M_PI << 
+    //             std::endl;
+
+    this->Rtotal = this->R * this->Rtotal;
+    this->T = umeyama * this->T;
+    this->ttotal = this->t + this->ttotal;
     // auto centerA = A.colwise().mean();
     // auto centerB = B.colwise().mean();
     
@@ -198,6 +237,19 @@ void icp::Icp::updateParameters()
     (this->Stsprime) = this->Sts;
 }
 
+/**
+ * calculate rotaion error using Log(R_gt*R).norm()
+*/
+float icp::Icp::rotationError(Eigen::Matrix3f R)
+{
+    // Eigen::Matrix3f Rt = this->Rtotal;
+    Eigen::Matrix3f Rt = this->T.block(0,0,3,3);
+    Eigen::Matrix3f rotE = R * (Rt).transpose();
+    // std::cout << "Log(rotE): " << SO3::Log(rotE).transpose() << std::endl;
+    // std::cout << "||Log(rotE)||_2: " << SO3::Log(rotE).norm() << std::endl;
+    return SO3::Log(rotE).norm() * 180.f / M_PI;
+
+}
 
 void icp::Icp::run()
 {
@@ -248,6 +300,23 @@ float icp::Icp::getMse()
     return this->e;
 }
 
+/**
+ * return the accumulated rotation matrix
+*/
+icp::PointCloud icp::Icp::getR()
+{
+    return this->T.block(0,0,3,3);
+    // return this->Rtotal;
+}
+
+/**
+ * return the accumulated translation vector
+*/
+Eigen::Vector3f icp::Icp::getT()
+{
+    return this->T.block(0,3,3,1);
+    // return   this->ttotal;
+}
 //
 icp::Icp::~Icp()
 {
@@ -297,6 +366,8 @@ void icp::TrIcp::closestpoints()
         
     }
     std::sort_heap(this->distances.begin(), this->distances.end(),  icp::comparePairs);
+    // auto [ dist, pidx, midx ] = this->distances[0];
+    // std::cout << "dist: " << dist << std::endl;
 }
 
 void icp::TrIcp::updateNpo()

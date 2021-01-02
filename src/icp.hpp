@@ -35,7 +35,10 @@ namespace icp
 
         // motion affine transformation matrix
         icp::PointCloud R;
+        icp::PointCloud Rtotal = icp::PointCloud::Identity(3,3);
         Eigen::Vector3f t;
+        Eigen::Vector3f ttotal = Eigen::Vector3f(0,0,0);
+        Eigen::Matrix<float, Eigen::Dynamic , Eigen::Dynamic> T = Eigen::Matrix<float, Eigen::Dynamic , Eigen::Dynamic>::Identity(4,4);
 
         // wrongPair rejection algo
         bool reciprocal = false;
@@ -64,6 +67,10 @@ namespace icp
         size_t getNpo();
         float getSts();
         float getMse();
+        icp::PointCloud getR();
+        float rotationError(Eigen::Matrix3f R);
+        Eigen::Vector3f getT();
+        
     };
     
 

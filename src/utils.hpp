@@ -6,11 +6,15 @@ namespace icp {
     typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> PointCloud;
     typedef nanoflann::KDTreeEigenMatrixAdaptor<PointCloud> EigenMatrixKDTree;    
 
-    // MSE cost function
+    /**
+     * MSE cost function 
+    */
     float mse_cost(std::vector<std::tuple<float, int, int>>& distances, float xi);
 
-    // pair rejection
-    // reject pair p,m if (m is closest point to p) and (p is not closest to p)
+    /**
+     * pair rejection:
+     * reject pair p,m if (m is closest point to p) and (p is not closest to p)
+    */
     inline
     bool rejectWrongPair(PointCloud &M, size_t j, EigenMatrixKDTree& P, size_t i)
     {
@@ -30,7 +34,10 @@ namespace icp {
         return ret_idx!=i;
     }
 
-    // reject pair p,m if (m is closest point to p) and (p is not closest to p)
+    /**
+     * reject pair p,m if (m is closest point to p) and (p is not closest to p)
+     * closest is defined as a niegborhood eps
+    */
     inline
     bool rejectWrongPair(
         // point m
@@ -68,6 +75,6 @@ namespace icp {
     PointCloud addNoise(PointCloud M);
 
     // rotation
-    PointCloud rotate(PointCloud &M, float deg = 20.f, Eigen::Vector3f axis = Eigen::Vector3f(0,1,0));
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> rotate(PointCloud &M, float deg = 90.f, Eigen::Vector3f axis = Eigen::Vector3f(0,1,0));
     
 }
