@@ -1,9 +1,9 @@
 # point-cloud-registration
-A C++ implementation for Iterative Closest Point algorithm:
+A C++ implementation for Iterative Closest Point algorithm:  
 * Robust ICP
 * Trimmed ICP
 
-## reading point cloud:
+## reading point cloud:  
 It is only working with .ply extension using the function `readPointCloud(const std::string filename)` which returns an Eigen::Matrix<float, nSamples, 3> object.
 
 ## ICP:
@@ -12,7 +12,7 @@ It is only working with .ply extension using the function `readPointCloud(const 
 icp::PointCloud P, M;  
 icp::Icp robusticp(P,M);  
 ```
-2. run the algorithm
+2. run the algorithm  
 ```
 robusticp.run();
 ```
@@ -24,3 +24,5 @@ robusticp.run();
 `icp::Icp.getR()`: an accumulated 3X3 rotation matrix  
 `icp::Icp.rotationError(Eigen::Matrix3f R)`: computes the rotation error given a ground truth rotation  
 `icp::Icp.getT()`: an accumulated `Eigen::Vector3f` translation vector  
+
+**_NOTE:_** performance results are provided [here](https://github.com/SohilZidan/point-cloud-registration/blob/master/results/results.md)
