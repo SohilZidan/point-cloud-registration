@@ -1,5 +1,6 @@
 # point-cloud-registration
 [![build](https://github.com/SohilZidan/point-cloud-registration/actions/workflows/cmake.yml/badge.svg)](https://github.com/SohilZidan/point-cloud-registration/actions/workflows/cmake.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 A C++ implementation for Iterative Closest Point algorithm:  
 * Robust ICP
 * Trimmed ICP
