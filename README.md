@@ -27,4 +27,4 @@ robusticp.run();
 `icp::Icp.rotationError(Eigen::Matrix3f R)`: computes the rotation error given a ground truth rotation  
 `icp::Icp.getT()`: an accumulated `Eigen::Vector3f` translation vector  
 
-**_NOTE:_** performance results are provided [here](https://github.com/SohilZidan/point-cloud-registration/blob/master/results/results.md)
+**_NOTE:_** performance results are provided [here](https://github.com/SohilZidan/point-cloud-registration/blob/master/results/README.md)
